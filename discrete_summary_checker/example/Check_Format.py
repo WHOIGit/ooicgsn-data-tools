@@ -33,7 +33,7 @@ import numpy as np
 # #### Summary Sheet
 # Load the summary sheet. Make sure to navigate to the correct directory and have the correct file name entered.
 
-summary_sheet = pd.read_excel("../data/Southern_Ocean-04_NBP1709_Discrete_Sample_Summary_2021-05-05_ACR.xlsx")
+summary_sheet = pd.read_excel("../data/Irminger_Sea-06_AR35-05_Discrete_Sample_Summary.xlsx")
 summary_sheet.head()
 
 # #### Cruise Names
@@ -180,8 +180,8 @@ schema = Schema([
     Column('CTD Fluorescence Flag', [MatchesPatternValidation("-9999999")]),
     
     # Beam Attenuation (0, 1) and Transmission (0, 100)
-    Column('CTD Beam Attenuation [1/m]', [DecimalValidation, InRangeValidation(0,1) | MatchesPatternValidation("-9999999")]),
-    Column('CTD Beam Transmission [%]', [DecimalValidation, InRangeValidation(0, 100) | MatchesPatternValidation("-9999999")]),
+    Column('CTD Beam Attenuation [1/m]', [DecimalValidation, InRangeValidation(-0.1,1) | MatchesPatternValidation("-9999999")]),
+    Column('CTD Beam Transmission [%]', [DecimalValidation, InRangeValidation(-1, 101) | MatchesPatternValidation("-9999999")]),
     Column('CTD Transmissometer Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
     # CTD pH - we don't measure this
@@ -196,8 +196,8 @@ schema = Schema([
     Column('Discrete Oxygen Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
     # Chlorophyll & Phaeopigment ranges (0, 10); don't collect Fo/Fa ratios
-    Column('Discrete Chlorophyll [ug/L]', [DecimalValidation, InRangeValidation(0,10) | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Phaeopigment [ug/L]', [DecimalValidation, InRangeValidation(0,10) | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Chlorophyll [ug/L]', [DecimalValidation & InRangeValidation(0,10) | MatchesPatternValidation("-9999999") | MatchesPatternValidation(r"[0-9]{2}/[0-9]{2}$")]),
+    Column('Discrete Phaeopigment [ug/L]', [DecimalValidation & InRangeValidation(0,10) | MatchesPatternValidation("-9999999") | MatchesPatternValidation(r"[0-9]{2}/[0-9]{2}$")]),
     Column('Discrete Fo/Fa Ratio', [MatchesPatternValidation("-9999999")]),
     Column('Discrete Fluorescence Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     Column('Discrete Fluorescence Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
