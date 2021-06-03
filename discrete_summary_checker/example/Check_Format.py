@@ -23,7 +23,7 @@
 # 3. Completeness
 #     * Identify missing or incomplete elements
 #
-# This is done using teh ```pandas_schema``` library, which works to validate formatting and data of csv or tabular data. It has both off-the-shelf validation tools, such as a regex checker, as well as functionality to pass in custom format checkers.
+# This is done using the ```pandas_schema``` library, which works to validate formatting and data of csv or tabular data. It has both off-the-shelf validation tools, such as a regex checker, as well as functionality to pass in custom format checkers.
 
 # #### Import Libraries
 
@@ -293,7 +293,3 @@ for station in metadata["Station"].unique():
     merrors = metadata_schema.validate(station_data)
     for error in merrors:
         print(error)
-
-
-
-
