@@ -151,14 +151,20 @@ def main(argv=None):
 
     # assign input arguments.
     parser.add_argument("-si", "--startingID", dest="startingID", type=int,
-                        required=True, help="")
+                        required=True, help="The first ingestion ID \
+                        in the range of IDs to work on")
     parser.add_argument("-ei", "--endingID", dest="endingID", type=int,
-                        required=False, help="")
+                        required=False, help="The last ingestion ID \
+                        in the range of IDs to work on")
     parser.add_argument("-r", "--report", dest="idReport", default=False,
-                        required=False, action='store_true', help="")
+                        required=False, action='store_true',
+                        help="Pass this flag to generate a report for the \
+                        specified ingestion IDs")
     parser.add_argument("-s", "--stateChange", dest="stateChange", type=str,
                         choices=('run', 'stage', 'mock', 'cancel', 'suspend',
-                        'do nothing'), default='do nothing')
+                        'do nothing'), default='do nothing',
+                        help="Pass this parameter to change the state of the \
+                        specified ingestion IDs")
 
     # parse the input arguments and create a parser object
     args = parser.parse_args(argv)
