@@ -202,10 +202,11 @@ def main(argv=None):
             j = flatten_json(j)
 
             # Store everything in a temporary dataframe
-            df = pd.DataFrame(j, index=[0])
-            df = df[['id', 'type', 'refDes_subsite', 'refDes_node', 'refDes_sensor', \
-                'status', 'state', 'entryDate', 'username', 'dataSource', \
+            df = pd.DataFrame(j, index=[0], dtype=object)
+            df = df[['id', 'type', 'refDes_subsite', 'refDes_node', 'refDes_sensor',
+                'status', 'state', 'entryDate', 'username', 'dataSource',
                 'options_checkExistingFiles', 'parserDriver', 'fileMask']]
+            df = df.infer_objects()
 
             # Add columns to the temporary dataframe for number of files ingested and
             # their resulting status
