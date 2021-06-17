@@ -202,10 +202,20 @@ def main(argv=None):
             j = flatten_json(j)
 
             # Store everything in a temporary dataframe
-            df = pd.DataFrame(j, index=[0], dtype=object)
+            df = pd.DataFrame(j, index=[0], dtype='object')
+
+            # check if the options were set, if not create dummy values for them
+            options = ['options_beginData', 'options_endData', 'options_checkExistingFiles']
+            for option in options:
+                if option not in list(df.keys()):
+                    df[option] = None
+
+            # reorder the dataframe
             df = df[['id', 'type', 'refDes_subsite', 'refDes_node', 'refDes_sensor',
-                'status', 'state', 'entryDate', 'username', 'dataSource',
-                'options_checkExistingFiles', 'parserDriver', 'fileMask']]
+                     'status', 'state', 'entryDate', 'username', 'dataSource',
+                     'options_beginData', 'options_endData', 'options_checkExistingFiles',
+                     'parserDriver', 'fileMask']]
+            # convert the objects
             df = df.infer_objects()
 
             # Add columns to the temporary dataframe for number of files ingested and
