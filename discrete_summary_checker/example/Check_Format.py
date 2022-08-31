@@ -138,7 +138,7 @@ schema = Schema([
     Column("CTD File", [MatchesPatternValidation(r".*\.hex$") | MatchesPatternValidation("-9999999")]),
     Column("CTD File Flag", [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
-    # Niskin Bottles: Check they are integers between 0 & 24
+    # Niskin Bottles: Check they are integers between 0 & 25
     Column("Niskin/Bottle Position", [IntValidation, InRangeValidation(0, 25) | MatchesPatternValidation("-9999999")]),
     Column("Niskin Flag", [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
@@ -166,7 +166,7 @@ schema = Schema([
     Column('CTD Conductivity 2 [S/m]', [DecimalValidation, InRangeValidation(0,6) | MatchesPatternValidation("-9999999")]),
     Column('CTD Conductivity 2 Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
-    # Practical salinity should be within ocean ranges (32, 37) and floats
+    # Practical salinity should be within ocean ranges (31, 37) and floats
     Column('CTD Salinity 1 [psu]', [DecimalValidation, InRangeValidation(31, 37) | MatchesPatternValidation("-9999999")]),
     Column('CTD Salinity 2 [psu]', [DecimalValidation, InRangeValidation(31, 37) | MatchesPatternValidation("-9999999")]),
     
@@ -179,7 +179,7 @@ schema = Schema([
     Column('CTD Fluorescence [mg/m^3]', [DecimalValidation | MatchesPatternValidation("-9999999")]),
     Column('CTD Fluorescence Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
-    # Beam Attenuation (0, 1) and Transmission (0, 100)
+    # Beam Attenuation (-0.01, 1) and Transmission (-1, 101)
     Column('CTD Beam Attenuation [1/m]', [DecimalValidation, InRangeValidation(-0.1,1) | MatchesPatternValidation("-9999999")]),
     Column('CTD Beam Transmission [%]', [DecimalValidation, InRangeValidation(-1, 101) | MatchesPatternValidation("-9999999")]),
     Column('CTD Transmissometer Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
@@ -222,11 +222,11 @@ schema = Schema([
     Column('Discrete Salinity Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
     # Carbon System measurement: Check within ocean ranges; don't collect/measure pCO2
-    #     Alkalinity: Should be between 2200 - 2400
+    #     Alkalinity: Should be between 2100 - 2400
     Column('Discrete Alkalinity [umol/kg]', [InRangeValidation(2100, 2400) | MatchesPatternValidation("-9999999")]),
     Column('Discrete Alkalinity Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     Column('Discrete Alkalinity Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    #     DIC: Range should be 1900 - 2300
+    #     DIC: Range should be 1900 - 2450
     Column('Discrete DIC [umol/kg]', [InRangeValidation(1900, 2450) | MatchesPatternValidation("-9999999")]),
     Column('Discrete DIC Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     Column('Discrete DIC Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
