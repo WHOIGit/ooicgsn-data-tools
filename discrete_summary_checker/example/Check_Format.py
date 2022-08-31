@@ -205,7 +205,7 @@ schema = Schema([
     # Nutrients: Ranges based on physical ocean ranges
     #     Phosphate: Maximum value ~5 uM (WOA 2018 mean fields); check for "<" which means undetecable
     Column('Discrete Phosphate [uM]', [InRangeValidation(0, 5) | MatchesPatternValidation(r"<\d.\d{2}") | MatchesPatternValidation("-9999999")]),
-    #     Silicate: Maximum value for Southern Ocean ~120 uM (WOA 2018 mean fields); check for "<" which mean undetectable
+    #     Silicate: Maximum value for Southern Ocean ~150 uM (WOA 2018 mean fields); check for "<" which mean undetectable
     Column('Discrete Silicate [uM]', [InRangeValidation(0, 150)| MatchesPatternValidation(r"<\d.\d{2}") | MatchesPatternValidation("-9999999")]),
     #     Nitrate: Maximum value ~50 uM (WOA 2018 Mean mean fields)
     Column('Discrete Nitrate [uM]', [InRangeValidation(0, 50) | MatchesPatternValidation(r"<\d.\d{2}") | MatchesPatternValidation("-9999999")]),
