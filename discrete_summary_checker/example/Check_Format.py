@@ -33,7 +33,7 @@ import numpy as np
 # #### Summary Sheet
 # Load the summary sheet. Make sure to navigate to the correct directory and have the correct file name entered.
 
-summary_sheet = pd.read_excel("/home/andrew/Documents/OOI-CGSN/QAQC_Sandbox/Ship_data/data/Papa-04/Station_Papa-04_RB1605_Discrete_Summary_2022-01-03_ACR.xlsx")
+summary_sheet = pd.read_excel("../data/name_of_summary_sheet.xlsx")
 summary_sheet.head()
 
 # #### Cruise Names
