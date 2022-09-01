@@ -179,7 +179,7 @@ schema = Schema([
     Column('CTD Fluorescence [mg/m^3]', [DecimalValidation | MatchesPatternValidation("-9999999")]),
     Column('CTD Fluorescence Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
-    # Beam Attenuation (-0.01, 1) and Transmission (-1, 101)
+    # Beam Attenuation (-0.1, 1) and Transmission (-1, 101)
     Column('CTD Beam Attenuation [1/m]', [DecimalValidation, InRangeValidation(-0.1,1) | MatchesPatternValidation("-9999999")]),
     Column('CTD Beam Transmission [%]', [DecimalValidation, InRangeValidation(-1, 101) | MatchesPatternValidation("-9999999")]),
     Column('CTD Transmissometer Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
