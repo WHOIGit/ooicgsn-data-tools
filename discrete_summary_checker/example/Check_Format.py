@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.13.4
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -33,7 +33,7 @@ import numpy as np
 # #### Summary Sheet
 # Load the summary sheet. Make sure to navigate to the correct directory and have the correct file name entered.
 
-summary_sheet = pd.read_excel("../data/name_of_summary_sheet.xlsx")
+summary_sheet = pd.read_excel("../data/Pioneer-07_AR8_Discrete_Summary_2022-09-15_SEN.xlsx")
 summary_sheet.head()
 
 # #### Cruise Names
@@ -175,8 +175,8 @@ schema = Schema([
     Column('CTD Oxygen Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     Column('CTD Oxygen Saturation [mL/L]', [DecimalValidation, InRangeValidation(4,9) | MatchesPatternValidation("-9999999")]),
     
-    # Fluorescence - we don't measure this, should be fill value -9999999
-    Column('CTD Fluorescence [mg/m^3]', [DecimalValidation | MatchesPatternValidation("-9999999")]),
+    # Fluorescence - most values should be within 1-10 ug/L with an offset
+    Column('CTD Fluorescence [mg/m^3]', [DecimalValidation, InRangeValidation(-1,10) | MatchesPatternValidation("-9999999")]),
     Column('CTD Fluorescence Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
     # Beam Attenuation (-0.1, 1) and Transmission (-1, 101)
@@ -217,13 +217,13 @@ schema = Schema([
     Column('Discrete Nutrients Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
     # Salinity: Check that the ranges are within physical ocean ranges
-    Column('Discrete Salinity [psu]', [InRangeValidation(32, 37) | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Salinity [psu]', [InRangeValidation(31, 37) | MatchesPatternValidation("-9999999")]),
     Column('Discrete Salinity Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     Column('Discrete Salinity Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     
     # Carbon System measurement: Check within ocean ranges; don't collect/measure pCO2
-    #     Alkalinity: Should be between 2100 - 2400
-    Column('Discrete Alkalinity [umol/kg]', [InRangeValidation(2100, 2400) | MatchesPatternValidation("-9999999")]),
+    #     Alkalinity: Should be between 2100 - 2450
+    Column('Discrete Alkalinity [umol/kg]', [InRangeValidation(2100, 2450) | MatchesPatternValidation("-9999999")]),
     Column('Discrete Alkalinity Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     Column('Discrete Alkalinity Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     #     DIC: Range should be 1900 - 2450
