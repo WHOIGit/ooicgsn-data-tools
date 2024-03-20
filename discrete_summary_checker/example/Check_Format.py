@@ -25,18 +25,14 @@
 #
 # This is done using the ```pandas_schema``` library, which works to validate formatting and data of csv or tabular data. It has both off-the-shelf validation tools, such as a regex checker, as well as functionality to pass in custom format checkers.
 
-# #### Import Libraries
-
 import pandas as pd
 import numpy as np
 
 # #### Summary Sheet
 # Load the summary sheet. Make sure to navigate to the correct directory and have the correct file name entered.
 
-summary_sheet = pd.read_excel("../data/Pioneer-07_AR8_Discrete_Summary_2022-09-15_SEN-Copy1.xlsx")
+summary_sheet = pd.read_excel("/home/areed/Documents/OOI/reedan88/QAQC_Sandbox/Ship_data/data/Papa-10/Station_Papa-10_SKQ202308S_Discrete_Summary_2024-01-23_ACR.xlsx")
 summary_sheet.head()
-
-len(str(summary_sheet["Cast Flag"].unique()[-1])) == 17
 
 # #### Cruise Names
 # Load the R2R list of cruise names. These are the "official" cruise names which should be entered on the spreadsheets.
@@ -268,6 +264,8 @@ errors = schema.validate(summary_sheet)
 for error in errors:
     if "Calculated" in error.column or "Cruise" in error.column:
         pass
+    elif "CTD Beam Attenuation" in error.column:
+        pass
     else:
         print(error)
 
@@ -298,15 +296,14 @@ metadata_schema = Schema([
 
 # Run the validation on a station-by-station basis:
 
-for station in metadata["Station"].unique():
-    # Get the data associated with a particular station
-    station_data = metadata[metadata["Station"] == station]
+for cruise in metadata["Cruise"].unique():
+    cruise_data = metadata[metadata["Cruise"] == cruise]
+
+    for station in cruise_data["Station"].unique():
+        # Get the data associated with a particular station
+        station_data = cruise_data[cruise_data["Station"] == station]
     
-    # Run it through the validation checker
-    merrors = metadata_schema.validate(station_data)
-    for error in merrors:
-        print(error)
-
-
-
-
+        # Run it through the validation checker
+        merrors = metadata_schema.validate(station_data)
+        for error in merrors:
+            print(error)
