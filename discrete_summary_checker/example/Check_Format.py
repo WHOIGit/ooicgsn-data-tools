@@ -25,15 +25,13 @@
 #
 # This is done using the ```pandas_schema``` library, which works to validate formatting and data of csv or tabular data. It has both off-the-shelf validation tools, such as a regex checker, as well as functionality to pass in custom format checkers.
 
-# #### Import Libraries
-
 import pandas as pd
 import numpy as np
 
 # #### Summary Sheet
 # Load the summary sheet. Make sure to navigate to the correct directory and have the correct file name entered.
 
-summary_sheet = pd.read_excel("../data/Pioneer-07_AR8_Discrete_Summary_2022-09-15_SEN.xlsx")
+summary_sheet = pd.read_excel("/home/areed/Documents/OOI/reedan88/QAQC_Sandbox/Ship_data/data/Papa-10/Station_Papa-10_SKQ202308S_Discrete_Summary_2024-01-23_ACR.xlsx")
 summary_sheet.head()
 
 # #### Cruise Names
@@ -96,8 +94,16 @@ def check_int(num):
         return False
     return True
 
+def check_len(flag):
+    flag = str(flag)
+    if len(flag) == 17 or len(flag) == 8:
+        return True
+    else:
+        return False
+
 DecimalValidation = CustomElementValidation(lambda d: check_decimal(d), "is not decimal")
 IntValidation = CustomElementValidation(lambda d: check_int(d), "is not an integer")
+LengthValidation = CustomElementValidation(lambda d: check_len(d), "is the wrong length")
 
 
 # +
@@ -127,7 +133,7 @@ schema = Schema([
     Column("Start Longitude [degrees]", [InRangeValidation(-180, 180)]),
     Column("Start Time [UTC]", [DateFormatValidation("%Y-%m-%dT%H:%M:%S.%fZ")]),
     Column("Cast", [IntValidation]),
-    Column("Cast Flag", [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column("Cast Flag", [LengthValidation, MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
     Column("Bottom Depth at Start Position [m]", [InRangeValidation(0, 6000) | MatchesPatternValidation("-9999999")]),
     
     # ----------------------------------------------------------------------------------------
@@ -136,11 +142,11 @@ schema = Schema([
     #     All flag columns checked to start with "*" and be 16-digits long
     # CTD Files: Check they end with .hex
     Column("CTD File", [MatchesPatternValidation(r".*\.hex$") | MatchesPatternValidation("-9999999")]),
-    Column("CTD File Flag", [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column("CTD File Flag", [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Niskin Bottles: Check they are integers between 0 & 25
     Column("Niskin/Bottle Position", [IntValidation, InRangeValidation(0, 25) | MatchesPatternValidation("-9999999")]),
-    Column("Niskin Flag", [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column("Niskin Flag", [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Bottle Closure Time: should be yyyy-mm-ddTHH:MM:SS.sssZ
     Column("CTD Bottle Closure Time [UTC]", [DateFormatValidation("%Y-%m-%dT%H:%M:%S.%fZ") | MatchesPatternValidation("-9999999")]),
@@ -156,15 +162,15 @@ schema = Schema([
     
     # Temperature: Should be within 0 & 35C and decimal floats
     Column("CTD Temperature 1 [deg C]", [DecimalValidation, InRangeValidation(0, 35) | MatchesPatternValidation("-9999999")]),
-    Column("CTD Temperature 1 Flag", [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column("CTD Temperature 1 Flag", [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     Column("CTD Temperature 2 [deg C]", [DecimalValidation, InRangeValidation(0, 35) | MatchesPatternValidation("-9999999")]),
-    Column('CTD Temperature 2 Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('CTD Temperature 2 Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Conductivity: Should be within 0 & 6 and decimal floats
     Column('CTD Conductivity 1 [S/m]', [DecimalValidation, InRangeValidation(0,6) | MatchesPatternValidation("-9999999")]),
-    Column('CTD Conductivity 1 Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('CTD Conductivity 1 Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     Column('CTD Conductivity 2 [S/m]', [DecimalValidation, InRangeValidation(0,6) | MatchesPatternValidation("-9999999")]),
-    Column('CTD Conductivity 2 Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('CTD Conductivity 2 Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Practical salinity should be within ocean ranges (31, 37) and floats
     Column('CTD Salinity 1 [psu]', [DecimalValidation, InRangeValidation(31, 37) | MatchesPatternValidation("-9999999")]),
@@ -172,17 +178,17 @@ schema = Schema([
     
     # Dissolved Oxygen & Sat concentrations should be within ocean ranges (0, 9) & decimal floats
     Column('CTD Oxygen [mL/L]', [DecimalValidation, InRangeValidation(0, 9) | MatchesPatternValidation("-9999999")]),
-    Column('CTD Oxygen Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('CTD Oxygen Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     Column('CTD Oxygen Saturation [mL/L]', [DecimalValidation, InRangeValidation(4,9) | MatchesPatternValidation("-9999999")]),
     
     # Fluorescence - most values should be within 1-10 ug/L with an offset
     Column('CTD Fluorescence [mg/m^3]', [DecimalValidation, InRangeValidation(-1,10) | MatchesPatternValidation("-9999999")]),
-    Column('CTD Fluorescence Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('CTD Fluorescence Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Beam Attenuation (-0.1, 1) and Transmission (-1, 101)
     Column('CTD Beam Attenuation [1/m]', [DecimalValidation, InRangeValidation(-0.1,1) | MatchesPatternValidation("-9999999")]),
     Column('CTD Beam Transmission [%]', [DecimalValidation, InRangeValidation(-1, 101) | MatchesPatternValidation("-9999999")]),
-    Column('CTD Transmissometer Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('CTD Transmissometer Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # CTD pH - we don't measure this
     Column('CTD pH', [MatchesPatternValidation("-9999999")]),
@@ -192,15 +198,15 @@ schema = Schema([
     # Discrete Sample Summaries
     # Oxygen: Ranges should be within physical ocean ranges
     Column('Discrete Oxygen [mL/L]', [DecimalValidation, InRangeValidation(0, 9) | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Oxygen Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Oxygen Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Oxygen Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Oxygen Replicate Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Chlorophyll & Phaeopigment ranges (0, 10); don't collect Fo/Fa ratios
     Column('Discrete Chlorophyll [ug/L]', [DecimalValidation & InRangeValidation(0,10) | MatchesPatternValidation("-9999999") | MatchesPatternValidation(r"[0-9]{2}/[0-9]{2}$")]),
     Column('Discrete Phaeopigment [ug/L]', [DecimalValidation & InRangeValidation(0,10) | MatchesPatternValidation("-9999999") | MatchesPatternValidation(r"[0-9]{2}/[0-9]{2}$")]),
     Column('Discrete Fo/Fa Ratio', [MatchesPatternValidation("-9999999")]),
-    Column('Discrete Fluorescence Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Fluorescence Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Fluorescence Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Fluorescence Replicate Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Nutrients: Ranges based on physical ocean ranges
     #     Phosphate: Maximum value ~5 uM (WOA 2018 mean fields); check for "<" which means undetecable
@@ -213,33 +219,33 @@ schema = Schema([
     Column('Discrete Nitrite [uM]', [InRangeValidation(0, 10) | MatchesPatternValidation(r"<\d.\d{2}") | MatchesPatternValidation("-9999999")]),
     #     Ammonium: Maximum values should be < 10; check for "<" which mean undetectable
     Column('Discrete Ammonium [uM]', [InRangeValidation(0, 10) | MatchesPatternValidation(r"<\d.\d{2}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Nutrients Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Nutrients Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Nutrients Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Nutrients Replicate Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Salinity: Check that the ranges are within physical ocean ranges
     Column('Discrete Salinity [psu]', [InRangeValidation(31, 37) | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Salinity Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Salinity Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Salinity Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Salinity Replicate Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Carbon System measurement: Check within ocean ranges; don't collect/measure pCO2
     #     Alkalinity: Should be between 2100 - 2450
     Column('Discrete Alkalinity [umol/kg]', [InRangeValidation(2100, 2450) | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Alkalinity Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete Alkalinity Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Alkalinity Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete Alkalinity Replicate Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     #     DIC: Range should be 1900 - 2450
     Column('Discrete DIC [umol/kg]', [InRangeValidation(1900, 2450) | MatchesPatternValidation("-9999999")]),
-    Column('Discrete DIC Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete DIC Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete DIC Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete DIC Replicate Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     #     pCO2: CGSN doesn't measure; should be all fill values
     Column('Discrete pCO2 [uatm]', [InRangeValidation(200, 1200) | MatchesPatternValidation("-9999999")]),
     Column('pCO2 Analysis Temp [deg C]', [DecimalValidation, InRangeValidation(20, 26) | MatchesPatternValidation("-9999999")]),
-    Column('Discrete pCO2 Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete pCO2 Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete pCO2 Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete pCO2 Replicate Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     #     pH: Range should be 7 - 9 & Analysis temp 25C
     Column('Discrete pH [Total scale]', [InRangeValidation(7, 9) | MatchesPatternValidation("-9999999")]),
     Column('pH Analysis Temp [deg C]', [DecimalValidation, InRangeValidation(24, 26) | MatchesPatternValidation("-9999999")]),
-    Column('Discrete pH Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
-    Column('Discrete pH Replicate Flag', [MatchesPatternValidation(r"\*0|1{16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete pH Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
+    Column('Discrete pH Replicate Flag', [LengthValidation, MatchesPatternValidation(r"\*(0|1){16}") | MatchesPatternValidation("-9999999")]),
     
     # Calculated Carbon System measurement: We don't impute these, should all be fill values
     Column('Calculated Alkalinity [umol/kg]', [MatchesPatternValidation("-9999999")]),
@@ -256,7 +262,9 @@ schema = Schema([
 errors = schema.validate(summary_sheet)
 
 for error in errors:
-    if "Calculated" in error.column:
+    if "Calculated" in error.column or "Cruise" in error.column:
+        pass
+    elif "CTD Beam Attenuation" in error.column:
         pass
     else:
         print(error)
@@ -288,15 +296,14 @@ metadata_schema = Schema([
 
 # Run the validation on a station-by-station basis:
 
-for station in metadata["Station"].unique():
-    # Get the data associated with a particular station
-    station_data = metadata[metadata["Station"] == station]
+for cruise in metadata["Cruise"].unique():
+    cruise_data = metadata[metadata["Cruise"] == cruise]
+
+    for station in cruise_data["Station"].unique():
+        # Get the data associated with a particular station
+        station_data = cruise_data[cruise_data["Station"] == station]
     
-    # Run it through the validation checker
-    merrors = metadata_schema.validate(station_data)
-    for error in merrors:
-        print(error)
-
-
-
-
+        # Run it through the validation checker
+        merrors = metadata_schema.validate(station_data)
+        for error in merrors:
+            print(error)
