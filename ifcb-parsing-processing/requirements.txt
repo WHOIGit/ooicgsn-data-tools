@@ -1,0 +1,9 @@
+pandas
+re
+os
+pytz
+datetime
+chardet
+geopy
+csv
+jupyter
