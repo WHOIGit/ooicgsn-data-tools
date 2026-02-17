@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "SeaBird CTD XMLCON parser, calibration PDF parser, and calibration GUI"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "BSD-3" }
+license = { text = "BSD-3-Clause" }
 authors = [
     { name = "Andrew Reed" },
 ]
@@ -45,3 +45,9 @@ include = ["cruise_tools*"]
 
 [tool.setuptools.package-data]
 "cruise_tools.ctd" = ["py.typed"]
+
+# ── Test configuration ────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-v --disable-warnings"
+testpaths = ["cruise_tools/ctd/tests"]
