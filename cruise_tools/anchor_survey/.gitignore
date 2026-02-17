@@ -1,0 +1,3 @@
+# Scratch / development notebooks — commit tutorials intentionally
+*.ipynb
+!notebooks/tutorial*.ipynb
