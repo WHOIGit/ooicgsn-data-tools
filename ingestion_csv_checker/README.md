@@ -1,6 +1,7 @@
 # OOI Ingest CSV Checker
 
-Two small command-line tools for checking OOI ingestion csv pull requests:
+Two small command-line tools for sanity-checking OOI ingestion CSVs before
+they go live:
 
 1. **`ooi_ingest_check.py`** — validates one ingest CSV, and optionally
    diffs it against a previous version (e.g. `R00002` → `R00003`).
@@ -16,6 +17,10 @@ parser, filename_mask, reference_designator, data_source, status, notes
 
 and filenames of the form `<SITE>_<Rxxxxx>_ingest.csv`, e.g.
 `CP10CNSM_R00003_ingest.csv`.
+
+Mobile assets (gliders/profilers) are also supported: since all of them
+share the same `05MOAS` array-and-class code, their "site" is really
+`<array><MOAS-class>-<platform ID>`, e.g. `GP05MOAS-PG380_R00001_ingest.csv`.
 
 ## Requirements
 
@@ -89,21 +94,30 @@ Rows are classified as:
 |---|---|
 | `OK` | matching file(s) found, all non-empty |
 | `ERROR` | status is `Available` but files are missing, empty, or the directory couldn't be listed |
-| `WARN` | same problem, but status is `Expected` / `Not Available` |
-| `INFO` | status is `Expected` / `Not Available` but matching files already exist |
+| `WARN` | same problem, but status is `Expected` / `Not Available` (missing data isn't surprising there) |
+| `INFO` | status is `Expected` / `Not Available` but matching files already exist — maybe update the status |
 
-Commented-out rows are skipped by default;
+Commented-out rows (`parser` starting with `#`) are skipped by default;
 pass `--include-commented` to check them too.
 
 ### Useful options
 
 ```
---base-url URL         Archive base URL (default: https://rawdata.oceanobservatories.org/files)
---timeout SECONDS       Per-request timeout (default: 15)
+--base-url URL          Archive base URL (default: https://rawdata.oceanobservatories.org/files)
+--timeout SECONDS       Read timeout per request attempt (default: 30). Connect timeout is
+                        capped at 10s separately. Raise this if you see read-timeout errors
+                        on large listings (e.g. a glider's flat "merged/" folder).
+--retries N             Extra attempts for a timed-out/failed directory listing before it's
+                        reported as an error (default: 2, i.e. 3 tries total; 0 disables retrying)
+--retry-backoff SECONDS Base wait before a retry, doubling each attempt (default: 2.0)
 --delay SECONDS         Pause before each new directory listing fetch, as a courtesy to the archive
 --include-commented     Also check rows whose parser starts with '#'
 --no-head-fallback      Skip the HEAD-request fallback for listings that don't show a size
 ```
+
+If you still see read timeouts after raising `--timeout` and `--retries` (some glider
+`merged/` directories accumulate thousands of files and can be genuinely slow to list),
+try `--timeout 60 --retries 3`.
 
 ### Exit status
 

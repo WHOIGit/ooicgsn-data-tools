@@ -7,6 +7,10 @@ https://rawdata.oceanobservatories.org/files/.
 This does NOT download or parse the data files themselves — it only
 walks the archive's directory listings and checks reported file sizes
 (falling back to a HEAD request only when a listing doesn't show a size).
+Large listings (e.g. a glider's flat "merged/" folder with thousands of
+files) can be slow to fully return, so each request is retried a couple
+of times with backoff before being reported as a failure; raise
+--timeout and/or --retries if you still see read-timeout errors.
 
 IMPORTANT: rawdata.oceanobservatories.org's robots.txt disallows
 automated crawling. OOI's own documentation tells users to override this
@@ -21,7 +25,7 @@ Usage
 -----
 python3 check_raw_archive.py INGEST.csv
 python3 check_raw_archive.py INGEST.csv --base-url https://rawdata.oceanobservatories.org/files
-python3 check_raw_archive.py INGEST.csv --include-commented --timeout 20
+python3 check_raw_archive.py INGEST.csv --include-commented --timeout 60 --retries 3
 
 Exit status is non-zero if any row with status "Available" is missing
 files or has only zero-byte files.
@@ -40,11 +44,9 @@ from ooi_ingest_check import load_csv, check_header, parse_ingest_filename, Issu
 
 MASK_PREFIX = "/omc_data/whoi/OMC/"
 DEFAULT_BASE_URL = "https://rawdata.oceanobservatories.org/files"
-USER_AGENT = ("ooi-ingest-csv-checker/1.0 (archive presence check; see script "
-              "header)")
+USER_AGENT = "ooi-ingest-csv-checker/1.0 (archive presence check; see script header)"
 
-ANCHOR_RE = re.compile(r'<a\s+[^>]*href="([^"]+)"[^>]*>(.*?)</a>',
-                       re.IGNORECASE | re.DOTALL)
+ANCHOR_RE = re.compile(r'<a\s+[^>]*href="([^"]+)"[^>]*>(.*?)</a>', re.IGNORECASE | re.DOTALL)
 TAG_RE = re.compile(r"<[^>]+>")
 TRAILER_RE = re.compile(
     r"(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}|\d{2}-[A-Za-z]{3}-\d{4}\s+\d{2}:\d{2})\s*([\d.]+[KMGTkmgt]?|-)?"
@@ -52,8 +54,7 @@ TRAILER_RE = re.compile(
 SIZE_RE = re.compile(r"^([\d.]+)\s*([KMGT]?)$", re.IGNORECASE)
 SIZE_MULT = {"": 1, "K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4}
 
-SKIP_LINK_TEXT = {"parent directory", "name", "last modified", "size",
-                  "description"}
+SKIP_LINK_TEXT = {"parent directory", "name", "last modified", "size", "description"}
 
 
 def parse_size(size_str):
@@ -199,12 +200,23 @@ class ArchiveWalker:
     session : requests.Session
         Session used for all GET/HEAD requests. Callers are expected to
         have already set any desired headers (e.g. ``User-Agent``) on it.
-    timeout : float, default 15
-        Per-request timeout, in seconds, passed straight through to
-        `requests`.
+    timeout : float, default 30
+        Read timeout, in seconds, for each individual request attempt.
+        Connect timeout is capped separately (see `get_listing`) so a
+        server that's slow to *start* responding fails fast, while one
+        that's slow to *finish* sending a large listing (common for
+        glider ``merged/`` folders with thousands of files) gets the
+        full `timeout` to do so.
     delay : float, default 0.0
         Seconds to sleep before each *new* directory listing fetch (i.e.
         not before cache hits), as a courtesy to the archive server.
+    retries : int, default 2
+        Number of extra attempts to make for a directory listing after
+        a transient failure (timeout, connection error) before giving up
+        and recording it as an error. ``0`` disables retrying.
+    retry_backoff : float, default 2.0
+        Base seconds to wait before a retry; the wait doubles after each
+        attempt (``retry_backoff * 2**attempt``).
 
     Attributes
     ----------
@@ -214,24 +226,36 @@ class ArchiveWalker:
         See parameters.
     delay : float
         See parameters.
+    retries : int
+        See parameters.
+    retry_backoff : float
+        See parameters.
     listing_cache : dict of {str : tuple}
         Maps a directory URL to ``(entries, error)`` as returned by
         :meth:`get_listing`.
     fetch_count : int
         Number of directory listings actually fetched over the network
-        (i.e. excluding cache hits). Useful for reporting/debugging.
+        (i.e. excluding cache hits, but including retried attempts).
+        Useful for reporting/debugging.
     """
 
-    def __init__(self, session, timeout=15, delay=0.0):
+    def __init__(self, session, timeout=30, delay=0.0, retries=2, retry_backoff=2.0):
         self.session = session
         self.timeout = timeout
         self.delay = delay
-        self.listing_cache = {}   # url->(entries / None, error message / None)
+        self.retries = retries
+        self.retry_backoff = retry_backoff
+        self.listing_cache = {}   # url -> (entries or None, error message or None)
         self.fetch_count = 0
 
     def get_listing(self, url):
         """
         Fetch and parse a directory listing, using the instance cache.
+
+        Retries up to :attr:`retries` additional times (with exponential
+        backoff) on connection errors or timeouts before giving up, since
+        large listings (e.g. glider ``merged/`` folders) can time out
+        transiently. Only the final outcome is cached.
 
         Parameters
         ----------
@@ -244,29 +268,41 @@ class ArchiveWalker:
         -------
         entries : list of dict or None
             Entries as returned by :func:`parse_directory_listing`, or
-            ``None`` if the request failed or didn't return HTTP 200.
+            ``None`` if every attempt failed or didn't return HTTP 200.
         error : str or None
             ``None`` on success, otherwise a short human-readable
             description of what went wrong (e.g. ``"HTTP 404"`` or
-          ``"request failed: <exception message>"``).
+            ``"request failed after 3 attempt(s): <exception message>"``).
         """
         if url in self.listing_cache:
             return self.listing_cache[url]
-        if self.delay:
-            time.sleep(self.delay)
-        self.fetch_count += 1
-        try:
-            resp = self.session.get(url, timeout=self.timeout)
-        except requests.exceptions.RequestException as e:
-            result = (None, f"request failed: {e}")
+
+        last_exc = None
+        for attempt in range(self.retries + 1):
+            if self.delay:
+                time.sleep(self.delay)
+            if attempt > 0:
+                time.sleep(self.retry_backoff * (2 ** (attempt - 1)))
+            self.fetch_count += 1
+            try:
+                # (connect timeout, read timeout) -- fail fast if the server
+                # never starts responding, but allow the full timeout for a
+                # large listing body to finish arriving.
+                resp = self.session.get(url, timeout=(min(self.timeout, 10), self.timeout))
+            except requests.exceptions.RequestException as e:
+                last_exc = e
+                continue
+            if resp.status_code != 200:
+                result = (None, f"HTTP {resp.status_code}")
+                self.listing_cache[url] = result
+                return result
+            entries = parse_directory_listing(resp.text)
+            result = (entries, None)
             self.listing_cache[url] = result
             return result
-        if resp.status_code != 200:
-            result = (None, f"HTTP {resp.status_code}")
-            self.listing_cache[url] = result
-            return result
-        entries = parse_directory_listing(resp.text)
-        result = (entries, None)
+
+        n_attempts = self.retries + 1
+        result = (None, f"request failed after {n_attempts} attempt(s): {last_exc}")
         self.listing_cache[url] = result
         return result
 
@@ -275,7 +311,9 @@ class ArchiveWalker:
         Fetch a file's size via an HTTP HEAD request.
 
         Used as a fallback when a directory listing doesn't show a size
-        for a matched file (e.g. some listing layouts omit it).
+        for a matched file (e.g. some listing layouts omit it). Retries
+        the same way as :meth:`get_listing`, but failures here are not
+        cached (each call is for a distinct file URL).
 
         Parameters
         ----------
@@ -286,17 +324,20 @@ class ArchiveWalker:
         -------
         int or None
             The value of the response's ``Content-Length`` header as an
-            integer, or ``None`` if the request failed, didn't return
+            integer, or ``None`` if every attempt failed, didn't return
             HTTP 200, or lacked that header.
         """
-        try:
-            resp = self.session.head(url,
-                                     timeout=self.timeout,
-                                     allow_redirects=True)
-            if resp.status_code == 200 and "Content-Length" in resp.headers:
-                return int(resp.headers["Content-Length"])
-        except (requests.exceptions.RequestException, ValueError):
-            pass
+        for attempt in range(self.retries + 1):
+            if attempt > 0:
+                time.sleep(self.retry_backoff * (2 ** (attempt - 1)))
+            try:
+                resp = self.session.head(url, timeout=(min(self.timeout, 10), self.timeout),
+                                          allow_redirects=True)
+                if resp.status_code == 200 and "Content-Length" in resp.headers:
+                    return int(resp.headers["Content-Length"])
+                return None
+            except (requests.exceptions.RequestException, ValueError):
+                continue
         return None
 
     def resolve(self, base_url, segments):
@@ -317,8 +358,7 @@ class ArchiveWalker:
             ``"https://rawdata.oceanobservatories.org/files"``.
         segments : list of str
             Path components after `base_url`, e.g.
-            ``["CP10CNSM", "R00003", "instruments", "dcl36", "PHSEN_*",
-               "SAMI*V.txt"]``.
+            ``["CP10CNSM", "R00003", "instruments", "dcl36", "PHSEN_*", "SAMI*V.txt"]``.
 
         Returns
         -------
@@ -365,17 +405,14 @@ class ArchiveWalker:
             matches, errors = [], []
             subdirs = [e for e in entries if e["is_dir"] and fnmatch.fnmatchcase(e["name"], seg)]
             for e in subdirs:
-                sub_matches, sub_errors = self._walk(current_url + e["name"] +
-                                                     "/", rest)
+                sub_matches, sub_errors = self._walk(current_url + e["name"] + "/", rest)
                 matches.extend(sub_matches)
                 errors.extend(sub_errors)
             return matches, errors
         else:
             matches = [
-                {"url": current_url + e["name"], "name": e["name"],
-                 "size_bytes": e["size_bytes"]}
-                for e in entries if not e["is_dir"] and fnmatch.fnmatchcase(
-                    e["name"], seg)
+                {"url": current_url + e["name"], "name": e["name"], "size_bytes": e["size_bytes"]}
+                for e in entries if not e["is_dir"] and fnmatch.fnmatchcase(e["name"], seg)
             ]
             return matches, []
 
@@ -395,8 +432,7 @@ def mask_to_segments(mask):
     -------
     list of str or None
         Non-empty path components after the prefix, e.g.
-        ``["CP10CNSM", "R00003", "cg_data", "cpm3", "syslog",
-           "cpm_status*.txt"]``,
+        ``["CP10CNSM", "R00003", "cg_data", "cpm3", "syslog", "cpm_status*.txt"]``,
         or ``None`` if `mask` doesn't start with :data:`MASK_PREFIX`.
 
     Examples
@@ -453,8 +489,7 @@ def classify_row(row, matches, errors, walker, verify_nonzero_via_head):
 
     if errors:
         sev = "warn" if is_expected_missing else "error"
-        return sev, (f"could not list one or more directories: "
-                     f"{'; '.join(errors)}")
+        return sev, f"could not list one or more directories: {'; '.join(errors)}"
 
     if not matches:
         sev = "info" if is_expected_missing else "error"
@@ -487,7 +522,8 @@ def classify_row(row, matches, errors, walker, verify_nonzero_via_head):
         else "1 matching file found, non-empty"
 
 
-def check_archive(path, rows, base_url, timeout, include_commented, verify_nonzero_via_head, delay):
+def check_archive(path, rows, base_url, timeout, include_commented, verify_nonzero_via_head, delay,
+                   retries=2, retry_backoff=2.0):
     """
     Check every row's filename_mask against the raw data archive and print a report.
 
@@ -502,7 +538,7 @@ def check_archive(path, rows, base_url, timeout, include_commented, verify_nonze
         Archive base URL, e.g.
         ``"https://rawdata.oceanobservatories.org/files"``.
     timeout : float
-        Per-request timeout, in seconds, passed to :class:`ArchiveWalker`.
+        Read timeout, in seconds, passed to :class:`ArchiveWalker`.
     include_commented : bool
         If ``False`` (the default from the CLI), rows whose `parser`
         starts with ``"#"`` are skipped entirely rather than checked.
@@ -513,6 +549,12 @@ def check_archive(path, rows, base_url, timeout, include_commented, verify_nonze
     delay : float
         Seconds to sleep before each new directory listing fetch,
         passed to :class:`ArchiveWalker`.
+    retries : int, default 2
+        Extra attempts for a timed-out/failed directory listing before
+        it's reported as an error, passed to :class:`ArchiveWalker`.
+    retry_backoff : float, default 2.0
+        Base seconds between retries (doubles each attempt), passed to
+        :class:`ArchiveWalker`.
 
     Returns
     -------
@@ -521,7 +563,8 @@ def check_archive(path, rows, base_url, timeout, include_commented, verify_nonze
         return indicates the archive is missing data that the CSV
         claims is ``Available``.
     """
-    walker = ArchiveWalker(requests.Session(), timeout=timeout, delay=delay)
+    walker = ArchiveWalker(requests.Session(), timeout=timeout, delay=delay,
+                            retries=retries, retry_backoff=retry_backoff)
     walker.session.headers.update({"User-Agent": USER_AGENT})
 
     print("=" * 72)
@@ -589,7 +632,16 @@ def main():
     ap.add_argument("csv_file", help="Ingest CSV to check against the raw data archive.")
     ap.add_argument("--base-url", default=DEFAULT_BASE_URL,
                      help=f"Archive base URL (default: {DEFAULT_BASE_URL})")
-    ap.add_argument("--timeout", type=float, default=15.0, help="Per-request timeout in seconds.")
+    ap.add_argument("--timeout", type=float, default=30.0,
+                     help="Read timeout in seconds for each request attempt (default: 30). "
+                          "Connect timeout is capped at 10s separately. Large glider 'merged/' "
+                          "listings can be slow, so raise this if you see read-timeout errors.")
+    ap.add_argument("--retries", type=int, default=2,
+                     help="Extra attempts for a directory listing after a timeout/connection "
+                          "error before reporting it as an error (default: 2, i.e. 3 tries total). "
+                          "Use 0 to disable retrying.")
+    ap.add_argument("--retry-backoff", type=float, default=2.0,
+                     help="Base seconds to wait before a retry; doubles each attempt (default: 2.0).")
     ap.add_argument("--delay", type=float, default=0.0,
                      help="Seconds to sleep before each new directory listing fetch (be polite to the archive).")
     ap.add_argument("--include-commented", action="store_true",
@@ -610,6 +662,7 @@ def main():
     n_errors = check_archive(
         args.csv_file, rows, args.base_url, args.timeout,
         args.include_commented, not args.no_head_fallback, args.delay,
+        retries=args.retries, retry_backoff=args.retry_backoff,
     )
     sys.exit(1 if n_errors else 0)
 

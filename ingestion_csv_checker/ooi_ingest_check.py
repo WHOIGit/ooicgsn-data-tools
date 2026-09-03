@@ -11,7 +11,10 @@ Two modes:
    - no duplicate (parser, reference_designator, data_source) rows
    - every filename_mask path references the data folder implied by the
      file's own name (e.g. CP10CNSM_R00003_ingest.csv rows should point at
-     .../CP10CNSM/R00003/...)
+     .../CP10CNSM/R00003/...). Mobile assets (gliders/profilers) use a
+     hyphenated "<array><MOAS-class>-<platform ID>" site code instead of
+     a plain site code, e.g. GP05MOAS-PG380_R00001_ingest.csv, since all
+     gliders share the same 05MOAS array-and-class code.
 
 2. Two-file comparison (when two files are given):
    - matches rows between the old and new file by
@@ -27,8 +30,8 @@ Two modes:
 
 Usage
 -----
-python ooi_ingest_check.py NEW.csv                  # validate only
-python ooi_ingest_check.py OLD.csv NEW.csv          # validate + diff
+python3 ooi_ingest_check.py NEW.csv                  # validate only
+python3 ooi_ingest_check.py OLD.csv NEW.csv          # validate + diff
 
 Exit status is non-zero if any errors (not just warnings) were found, so
 this can be dropped into a pre-ingest CI check.
@@ -41,8 +44,6 @@ import sys
 from collections import OrderedDict, defaultdict
 from pathlib import Path
 
-
-# --------- Configurations ---------
 EXPECTED_COLUMNS = [
     "parser",
     "filename_mask",
@@ -61,8 +62,11 @@ REFDES_RE = re.compile(r"^[A-Z0-9]{8}-[A-Z0-9]{5}-[0-9]{2}-[A-Z0-9]{9}$")
 # e.g. R00002, R00003 ...
 FOLDER_RE = re.compile(r"\bR\d{5}\b")
 
-# e.g. CP10CNSM_R00003_ingest.csv
-FILENAME_RE = re.compile(r"^([A-Za-z0-9]+)_(R\d{5})_ingest\.csv$")
+# e.g. CP10CNSM_R00003_ingest.csv (fixed asset) or
+# GP05MOAS-PG380_R00001_ingest.csv (mobile asset -- gliders/profilers all
+# share the "05MOAS" array-and-class code, so the "site" is really
+# "<array><MOAS-class>-<platform ID>", e.g. GP05MOAS-PG380).
+FILENAME_RE = re.compile(r"^([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)_(R\d{5})_ingest\.csv$")
 
 
 class IngestRow:
@@ -223,15 +227,20 @@ def parse_ingest_filename(path):
     ----------
     path : str or pathlib.Path
         Path to an ingest CSV, expected to be named like
-        ``'<SITE>_<Rxxxxx>_ingest.csv'`` (e.g. ``CP10CNSM_R00003_ingest.csv``).
-        Only the filename component is inspected; any directory part of
-        `path` is ignored.
+        ``'<SITE>_<Rxxxxx>_ingest.csv'`` (e.g. ``CP10CNSM_R00003_ingest.csv``)
+        for fixed assets, or ``'<SITE>-<PLATFORM>_<Rxxxxx>_ingest.csv'``
+        (e.g. ``GP05MOAS-PG380_R00001_ingest.csv``) for mobile assets
+        (gliders/profilers), whose "site" is really
+        ``<array><MOAS-class>-<platform ID>`` since all of them share the
+        same ``05MOAS`` array-and-class code. Only the filename component
+        is inspected; any directory part of `path` is ignored.
 
     Returns
     -------
     site : str or None
-        Upper-cased site code (e.g. ``"CP10CNSM"``), or ``None`` if the
-        filename doesn't follow the expected convention.
+        Upper-cased site code, including any hyphenated platform suffix
+        for mobile assets (e.g. ``"CP10CNSM"`` or ``"GP05MOAS-PG380"``),
+        or ``None`` if the filename doesn't follow the expected convention.
     folder : str or None
         Upper-cased data folder token (e.g. ``"R00003"``), or ``None`` if
         the filename doesn't follow the expected convention.
@@ -240,6 +249,8 @@ def parse_ingest_filename(path):
     --------
     >>> parse_ingest_filename("CP10CNSM_R00003_ingest.csv")
     ('CP10CNSM', 'R00003')
+    >>> parse_ingest_filename("GP05MOAS-PG380_R00001_ingest.csv")
+    ('GP05MOAS-PG380', 'R00001')
     >>> parse_ingest_filename("not_a_match.csv")
     (None, None)
     """
@@ -534,8 +545,8 @@ def compare_files(old_rows, old_folder, new_rows, new_folder):
                     pure_added.discard(nk)
                     break
 
-    field_changes = []  # rows matched by key, but status/notes differ
-    path_changes = []   # filename_mask differs beyond the folder
+    field_changes = []   # rows matched by key, but status/notes differ
+    path_changes = []    # rows matched by key, but filename_mask differs beyond the folder
     n_clean = 0
 
     for k in sorted(common):
@@ -583,8 +594,7 @@ def fmt_row(r):
         A one-line human-readable summary, e.g.
         ``"CP10CNSM-MFC31-00-CPMENG000 / recovered_host  (parser: ...)"``.
     """
-    return f"{r['reference_designator']} / {r['data_source']}  " \
-           f"(parser: {r['parser']})"
+    return f"{r['reference_designator']} / {r['data_source']}  (parser: {r['parser']})"
 
 
 def hr(char="-", width=72):
@@ -672,8 +682,8 @@ def print_diff_report(old_path, new_path, old_folder, new_folder, result):
                 print(f"        {field}: {old_v!r} -> {new_v!r}")
 
     if result.path_changes:
-        print(f"\n  {len(result.path_changes)} row(s) have a filename_mask"
-              " change beyond just the folder number (double-check these):")
+        print(f"\n  {len(result.path_changes)} row(s) have a filename_mask change beyond "
+              f"just the folder number (double-check these):")
         for old_r, new_r in result.path_changes:
             print(f"    - {fmt_row(new_r)}")
             print(f"        old: {old_r['filename_mask']}")
