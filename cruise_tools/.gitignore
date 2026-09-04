@@ -1,0 +1,44 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# ── Virtual / conda environments ──────────────────────────────────────────────
+.venv/
+venv/
+env/
+.conda/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+# Note: *.ipynb is intentionally NOT ignored here so that committed notebooks
+# (e.g. tutorials) are tracked. Add per-directory .gitignore entries for
+# scratch notebooks that should not be committed.
+
+# ── Editors ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Test artefacts ────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Calibration / sensor data ─────────────────────────────────────────────────
+# Real instrument data should not be committed to version control.
+# Example/test data in anchor_survey/data/ IS tracked (see anchor_survey/.gitignore).
+cals/
+ctd/data/
+# Specific extensions that are raw instrument files
+*.XMLCON
+*.xmlcon
+*.pdf

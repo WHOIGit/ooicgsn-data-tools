@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "cruise-tools-ctd"
+version = "0.1.0"
+description = "SeaBird CTD XMLCON parser, calibration PDF parser, and calibration GUI"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "BSD-3-Clause" }
+authors = [
+    { name = "Andrew Reed" },
+]
+keywords = ["SeaBird", "CTD", "oceanography", "calibration", "XMLCON"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Oceanography",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "pdfplumber>=0.11",
+    "pdf2image>=1.17",
+    "pytesseract>=0.3.13",
+    "Pillow>=10.0",
+]
+
+[project.scripts]
+ctd-cal-tool = "cruise_tools.ctd.ctd_cal_tool:main"
+
+[project.urls]
+Repository = "https://github.com/WHOIGit/cruise_tools"
+
+# ── Namespace package configuration ──────────────────────────────────────────
+# cruise_tools/ is a namespace package (no __init__.py at that level).
+# setuptools must be told not to require one.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cruise_tools*"]
+
+[tool.setuptools.package-data]
+"cruise_tools.ctd" = ["py.typed"]
+
+# ── Test configuration ────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-v --disable-warnings"
+testpaths = ["cruise_tools/ctd/tests"]

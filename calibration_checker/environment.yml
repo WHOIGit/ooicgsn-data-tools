@@ -1,0 +1,35 @@
+name: calibration-checker
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # ── Python ────────────────────────────────────────────────────────────────
+  - python>=3.11
+
+  # ── OCR engine (binary + Python wrapper) ─────────────────────────────────
+  # Install the Tesseract binary via conda so it is automatically on PATH,
+  # avoiding the manual Windows install / PATH configuration step.
+  - tesseract>=5.3
+
+  # ── Core data ─────────────────────────────────────────────────────────────
+  - pandas>=2.0
+  - numpy>=1.24
+
+  # ── PDF-to-image (for scanned / OCR PDFs) ─────────────────────────────────
+  # pdf2image requires poppler; conda-forge ships both together.
+  - poppler                   # required by pdf2image
+  - pip                       # remaining packages installed via pip below
+
+  - pip:
+      # pdfplumber (text-based PDF parsing) - installed once via pip, matching
+      # the version pin in pyproject.toml. NOTE: previously this was also
+      # pinned via conda-forge at a different version (>=0.10), which could
+      # resolve to two conflicting installs of the same package. Install it
+      # only once, here.
+      - pdfplumber>=0.11
+      # pdf2image is not on conda-forge as a standalone; install via pip.
+      - pdf2image>=1.17
+      # pytesseract wraps the tesseract binary installed above.
+      - pytesseract>=0.3.13
+      # Pillow (image processing for OCR pre-processing)
+      - Pillow>=10.0

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cruise-tools-anchor-survey"
+version = "0.1.0"
+description = "Interactive tool for estimating seafloor anchor positions from ship survey data."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "BSD-3-Clause" }
+authors = [
+    { name = "Andrew Reed" }
+]
+keywords = ["anchor", "survey", "oceanography", "mooring", "acoustics"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Oceanography",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "matplotlib",
+    "panel>=1.4.0",
+]
+
+[project.urls]
+Repository = "https://github.com/WHOIGit/cruise_tools"
+
+# ── Namespace package configuration ──────────────────────────────────────────
+# cruise_tools/ is a namespace package (no __init__.py at that level).
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cruise_tools*"]
+
+# ── Test configuration ────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-v --maxfail=1 --disable-warnings"
+testpaths = ["cruise_tools/anchor_survey/tests"]

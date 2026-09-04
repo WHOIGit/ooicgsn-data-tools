@@ -1,0 +1,24 @@
+# ── Calibration Checker — pip requirements ──────────────────────────────────
+#
+# For conda users the environment.yml is preferred because it also installs
+# the Tesseract OCR binary and poppler automatically via conda-forge.
+#
+# If using pip only you must install Tesseract and poppler separately:
+#   Windows : https://github.com/UB-Mannheim/tesseract/wiki
+#             https://github.com/oschwartz10612/poppler-windows/releases
+#   macOS   : brew install tesseract poppler
+#   Linux   : sudo apt install tesseract-ocr poppler-utils
+#
+# Then point the tool at the executable if it is not on PATH (needed by
+# calibration_checker.cdom and calibration_checker.parad, which OCR scanned
+# certificates):
+#   from calibration_checker.cdom import pdf_parser
+#   pdf_parser.TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# ---------------------------------------------------------------------------
+
+pandas>=2.0
+numpy>=1.24
+pdfplumber>=0.11
+pdf2image>=1.17
+pytesseract>=0.3.13
+Pillow>=10.0

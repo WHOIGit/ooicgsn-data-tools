@@ -1,0 +1,42 @@
+name: cruise-tools
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # ── Python ────────────────────────────────────────────────────────────────
+  - python>=3.11
+
+  # ── System binaries ───────────────────────────────────────────────────────
+  # Tesseract OCR — required by cruise_tools.ctd for scanned CDOM PDFs
+  - tesseract>=5.3
+  # poppler — required by pdf2image (used by cruise_tools.ctd)
+  - poppler
+
+  # ── Core data stack ───────────────────────────────────────────────────────
+  - pandas>=2.0
+  - numpy>=1.24
+  - matplotlib
+  - panel>=1.4.0
+
+  # ── PDF parsing ───────────────────────────────────────────────────────────
+  - pdfplumber>=0.10
+
+  # ── Development tools ─────────────────────────────────────────────────────
+  - pip
+  - pytest>=7
+  - jupyterlab
+  - pytest
+  - flake8
+
+  - pip:
+      # PDF rasterisation (pdf2image not on conda-forge standalone)
+      - pdf2image>=1.17
+      # Tesseract Python wrapper
+      - pytesseract>=0.3.13
+      # Image processing for OCR pre-processing
+      - Pillow>=10.0
+
+      # ── Install all sub-packages in editable mode ──────────────────────
+      - "-e ctd/"
+      - "-e anchor_survey/"
+      - "-e common/"
