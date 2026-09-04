@@ -77,7 +77,7 @@ def parse_parad_pdf(filepath: str, tesseract_cmd: str | None = None) -> pd.DataF
         Full path to the tesseract executable, only needed if a scanned
         certificate is encountered and tesseract isn't on PATH. Can also
         be set once at module level via
-        ``cruise_tools.parad.pdf_parser.TESSERACT_CMD``.
+        ``calibration_checker.parad.pdf_parser.TESSERACT_CMD``.
 
     Returns
     -------

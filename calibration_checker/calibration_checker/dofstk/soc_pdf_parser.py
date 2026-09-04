@@ -4,7 +4,7 @@ DOFST-K (SBE 43F) oxygen calibration certificate PDF parser.
 The certificate re-states most of the same coefficients as the `.cal`
 file (A, B, C, E, Foffset, Tau20), at lower printed precision — those are
 NOT what this parser extracts, since the `.cal` file is the authoritative
-source for them (see ``cruise_tools.dofstk.cal_parser``).
+source for them (see ``calibration_checker.dofstk.cal_parser``).
 
 What this parser is actually for: SBE 43 sensors sometimes get a
 post-calibration "Soc adjustment" — a corrected oxygen-signal-slope value,

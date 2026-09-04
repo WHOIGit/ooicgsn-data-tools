@@ -12,7 +12,7 @@ it does for everything else; instead the CSV row's value is a pointer —
 ``SheetRef:CC_tcarray`` — to a companion file
 (``<csv_basename>__CC_tcarray.ext``) sitting next to the main CSV, holding
 the matrix as plain comma-separated rows. Resolving ``SheetRef:`` pointers
-is handled generically in ``cruise_tools.common.ci_compare`` (not here),
+is handled generically in ``calibration_checker.common.ci_compare`` (not here),
 since it's a property of the CI CSV format, not of this instrument.
 
 `.dev` file layout (tab-delimited, relevant lines only):

@@ -12,8 +12,8 @@ this `.cal` file — SBE 43 oxygen sensors often get a post-calibration "Soc
 adjustment" documented only in the calibration certificate PDF (marked
 "(adj)"), and the CI record is supposed to reflect that adjusted value, not
 the factory Soc baked into the `.cal` file. See
-``cruise_tools.dofstk.soc_pdf_parser`` for that half, and
-``cruise_tools.dofstk.parse_dofstk()`` for the combined result. This
+``calibration_checker.dofstk.soc_pdf_parser`` for that half, and
+``calibration_checker.dofstk.parse_dofstk()`` for the combined result. This
 parser deliberately does NOT emit a CC_oxygen_signal_slope row from SOC,
 so it can't accidentally shadow the (correct) PDF-derived value.
 """
@@ -58,7 +58,7 @@ def _parse_kv_lines(filepath: str) -> dict[str, str]:
 def _build_serial(raw: dict[str, str]) -> str | None:
     """
     Build the CI-style serial ('43-2725') from INSTRUMENT_TYPE (e.g.
-    'SBE43F') + SERIALNO ('2725'). Same approach as cruise_tools.ctdmo:
+    'SBE43F') + SERIALNO ('2725'). Same approach as calibration_checker.ctdmo:
     the model number always immediately follows 'SBE', regardless of any
     suffix letters (here, the 'F' for fast-response).
     """
@@ -76,7 +76,7 @@ def parse_cal_file(filepath: str) -> pd.DataFrame:
     Parse a DOFST-K (SBE 43F) `.cal` file into a long-format DataFrame:
     CC_frequency_offset and the four residual-temperature-correction
     factors (a/b/c/e). Does NOT include CC_oxygen_signal_slope — combine
-    with ``cruise_tools.dofstk.parse_soc_pdf()`` (or just use
+    with ``calibration_checker.dofstk.parse_soc_pdf()`` (or just use
     ``parse_dofstk()``) to get that.
     """
     raw = _parse_kv_lines(filepath)

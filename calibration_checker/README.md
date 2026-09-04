@@ -8,7 +8,7 @@ CI system.
 
 Each instrument family (CTD, CTDMO, FLORT, ...) is its own module with its
 own parser, because they use different file formats and different
-coefficient-naming conventions. A shared comparator (`cruise_tools.common`)
+coefficient-naming conventions. A shared comparator (`calibration_checker.common`)
 does the actual "does this match the CI CSV" check, so adding a new
 instrument only means writing one small parser, not a whole new comparison
 pipeline.
@@ -16,24 +16,24 @@ pipeline.
 ## Contents
 
 ```
-cruise_tools/
+calibration_checker/
 ├── ctd/                        # SBE 9/11 CTD frame (deck-box CTD): temp/cond/pressure/oxygen
 │   ├── __init__.py              # public API re-exports
 │   ├── xmlcon_parser_enhanced.py   # XMLCON → pandas DataFrame
 │   └── cal_pdf_parser.py           # SBE cal cert PDF → coefficient dict
 ├── flort/                       # WET Labs ECO FLNTU / ECO Triplet (fluorometer + turbidity + backscatter)
 │   ├── __init__.py
-│   ├── flort_pdf_parser.py     # FLNTU characterisation sheet → XMLCON-shaped dicts (CTD-frame comparison)
+│   ├── pdf_parser.py           # FLNTU characterisation sheet → XMLCON-shaped dicts (CTD-frame comparison)
 │   └── dev_parser.py           # ECO Triplet .dev file → CI-CSV-shaped DataFrame (CGINS-FLORTD)
 ├── cdom/                        # standalone WET Labs ECO CDOM fluorometer (single channel)
 │   ├── __init__.py
-│   └── cdom_pdf_parser.py      # scanned characterisation sheet (OCR) → coefficient dict
+│   └── pdf_parser.py           # scanned characterisation sheet (OCR) → coefficient dict
 ├── ctdmo/                       # SBE 37-IM/IMP "inductive modem" CTD
 │   ├── __init__.py
 │   └── cal_parser.py           # .cal file → CI-CSV-shaped DataFrame
 ├── dosta/                       # Aanderaa Optode 4831/4330 (oxygen)
 │   ├── __init__.py
-│   └── aanderaa_pdf_parser.py  # cal certificate PDF (tables) → CI-CSV-shaped DataFrame
+│   └── pdf_parser.py           # cal certificate PDF (tables) → CI-CSV-shaped DataFrame
 ├── optaa/                       # WET Labs AC-S spectral absorption/attenuation meter
 │   ├── __init__.py
 │   └── dev_parser.py           # .dev file → CI-CSV-shaped DataFrame (incl. wavelength arrays + matrices)
@@ -88,7 +88,7 @@ coefficient arrays). More instruments can be added the same way — see
 
 ```bash
 conda env create -f environment.yml
-conda activate ctd-cal
+conda activate calibration-checker
 ```
 
 This installs **Tesseract OCR** and **poppler** automatically via
@@ -117,7 +117,7 @@ pip install -r requirements.txt
 
 ```bash
 # From the repo root after activating the environment:
-python -m cruise_tools.cal_tool
+python -m calibration_checker.cal_tool
 
 # Or, if installed as a package (pip install -e .):
 cal-tool
@@ -194,15 +194,15 @@ The general-purpose "did the CI CSV get transcribed correctly" check.
 | SBE 4 Conductivity | Text-based cal cert (PDF) | `parse_cal_pdf()` |
 | SBE 9 Pressure | Text-based cal cert (PDF) | `parse_cal_pdf()` |
 | SBE 43 / 63 Oxygen | Text-based cal cert (PDF) | `parse_cal_pdf()` |
-| FLNTU (CHL + NTU) | Characterisation sheet (PDF) | `cruise_tools.flort.parse_flort_pdf()` |
-| ECO CDOM | Scanned characterisation sheet (PDF, OCR) | `cruise_tools.cdom.parse_cdom_pdf()` |
-| CTDMO (SBE 37-IM/IMP) | `.cal` file | `cruise_tools.ctdmo.parse_cal_file()` |
-| DOSTA (Aanderaa Optode 4831/4330) | Multipoint cal certificate (PDF, tables only) | `cruise_tools.dosta.parse_dosta_pdf()` |
-| FLORT ECO Triplet (e.g. BBFL2W) | `.dev` calibration file | `cruise_tools.flort.parse_dev_file()` |
-| OPTAA (WET Labs AC-S) | `.dev` calibration file + 2 companion `.ext` matrix files | `cruise_tools.optaa.parse_dev_file()` |
-| DOFSTK (SBE 43F fast-response oxygen) | `.cal` file + Soc-adjusted cal certificate PDF | `cruise_tools.dofstk.parse_dofstk()` |
-| PARAD-K (Biospherical QSP-2200 PAR sensor) | Cal certificate PDF | `cruise_tools.parad.parse_parad_pdf()` |
-| NUTNR-B (Satlantic/Sea-Bird SUNA V2 nitrate analyzer) | `.CAL` file | `cruise_tools.nutnr.parse_cal_file()` |
+| FLNTU (CHL + NTU) | Characterisation sheet (PDF) | `calibration_checker.flort.parse_flort_pdf()` |
+| ECO CDOM | Scanned characterisation sheet (PDF, OCR) | `calibration_checker.cdom.parse_cdom_pdf()` |
+| CTDMO (SBE 37-IM/IMP) | `.cal` file | `calibration_checker.ctdmo.parse_cal_file()` |
+| DOSTA (Aanderaa Optode 4831/4330) | Multipoint cal certificate (PDF, tables only) | `calibration_checker.dosta.parse_dosta_pdf()` |
+| FLORT ECO Triplet (e.g. BBFL2W) | `.dev` calibration file | `calibration_checker.flort.parse_dev_file()` |
+| OPTAA (WET Labs AC-S) | `.dev` calibration file + 2 companion `.ext` matrix files | `calibration_checker.optaa.parse_dev_file()` |
+| DOFSTK (SBE 43F fast-response oxygen) | `.cal` file + Soc-adjusted cal certificate PDF | `calibration_checker.dofstk.parse_dofstk()` |
+| PARAD-K (Biospherical QSP-2200 PAR sensor) | Cal certificate PDF | `calibration_checker.parad.parse_parad_pdf()` |
+| NUTNR-B (Satlantic/Sea-Bird SUNA V2 nitrate analyzer) | `.CAL` file | `calibration_checker.nutnr.parse_cal_file()` |
 
 > **Note — CDOM PDFs:** these are typically scanned images with no embedded
 > text layer.  The tool automatically applies OCR (Tesseract at 500 DPI with
@@ -216,7 +216,7 @@ The general-purpose "did the CI CSV get transcribed correctly" check.
 ### CTD frame: XMLCON parser
 
 ```python
-from cruise_tools.ctd import XMLCONParser
+from calibration_checker.ctd import XMLCONParser
 
 parser = XMLCONParser("AR98A_013.XMLCON")
 print(parser.df)                       # full sensor table
@@ -227,8 +227,8 @@ df = parser.get_sensors_by_type("OxygenSensor")
 ### CTD frame: calibration PDF parser
 
 ```python
-from cruise_tools.ctd import parse_cal_pdf, compare_cal_to_xmlcon, print_comparison
-from cruise_tools.ctd import XMLCONParser
+from calibration_checker.ctd import parse_cal_pdf, compare_cal_to_xmlcon, print_comparison
+from calibration_checker.ctd import XMLCONParser
 
 cal = parse_cal_pdf("SBE_43_O0264_12Nov24.pdf")
 parser = XMLCONParser("AR98A_013.XMLCON")
@@ -239,7 +239,7 @@ print_comparison(cal, parser.get_sensor(6))
 ### FLORT: characterisation sheet parser
 
 ```python
-from cruise_tools.flort import parse_flort_pdf
+from calibration_checker.flort import parse_flort_pdf
 
 chl, ntu = parse_flort_pdf("FLNTURTD-7730_CharSheet.pdf")
 ```
@@ -247,18 +247,18 @@ chl, ntu = parse_flort_pdf("FLNTURTD-7730_CharSheet.pdf")
 ### CDOM: characterisation sheet parser (OCR)
 
 ```python
-from cruise_tools.cdom import parse_cdom_pdf, cdom_pdf_parser
+from calibration_checker.cdom import parse_cdom_pdf, pdf_parser
 
 # On Windows, if Tesseract is not on PATH:
-cdom_pdf_parser.TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+pdf_parser.TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 cdom = parse_cdom_pdf("FLNCDOM-1963_20220421.pdf")
 ```
 
 ### CTDMO: `.cal` file vs. CI calibration CSV
 
 ```python
-from cruise_tools.ctdmo import parse_cal_file, get_metadata
-from cruise_tools.common import compare_source_to_ci, summarize
+from calibration_checker.ctdmo import parse_cal_file, get_metadata
+from calibration_checker.common import compare_source_to_ci, summarize
 
 source = parse_cal_file("12584_1_.cal")
 print(get_metadata("12584_1_.cal"))
@@ -277,8 +277,8 @@ result.to_csv("12584_compare_report.csv", index=False)
 ### DOSTA: cal certificate PDF vs. CI calibration CSV
 
 ```python
-from cruise_tools.dosta import parse_dosta_pdf, get_metadata
-from cruise_tools.common import compare_source_to_ci, summarize
+from calibration_checker.dosta import parse_dosta_pdf, get_metadata
+from calibration_checker.common import compare_source_to_ci, summarize
 
 source = parse_dosta_pdf("DOSTA-D_Optode-4831_SN_466_Multipoint_Calibration_2025-03-03.pdf")
 print(get_metadata("DOSTA-D_Optode-4831_SN_466_Multipoint_Calibration_2025-03-03.pdf"))
@@ -291,7 +291,7 @@ print(summarize(result))
 #                # CC_conc_coef ([offset, slope]) both match exactly.
 ```
 
-The comparator (`cruise_tools.common.compare_source_to_ci`) is
+The comparator (`calibration_checker.common.compare_source_to_ci`) is
 instrument-agnostic: any parser that returns a DataFrame with
 `serial, name, value` columns (using the CI CSV's `CC_*` coefficient names)
 can be compared the same way. `value` may be a plain scalar, a flat Python
@@ -305,8 +305,8 @@ sitting next to the CSV.
 ### FLORT (ECO Triplet, e.g. BBFL2W): `.dev` file vs. CI calibration CSV
 
 ```python
-from cruise_tools.flort import parse_dev_file, get_metadata
-from cruise_tools.common import compare_source_to_ci, summarize
+from calibration_checker.flort import parse_dev_file, get_metadata
+from calibration_checker.common import compare_source_to_ci, summarize
 
 source = parse_dev_file("BBFL2W-1116.dev")
 print(get_metadata("BBFL2W-1116.dev"))
@@ -331,8 +331,8 @@ companion file sits alongside the CSV (as it does when both come from the
 same CI export), `compare_source_to_ci` resolves it automatically:
 
 ```python
-from cruise_tools.optaa import parse_dev_file, get_metadata
-from cruise_tools.common import compare_source_to_ci, summarize
+from calibration_checker.optaa import parse_dev_file, get_metadata
+from calibration_checker.common import compare_source_to_ci, summarize
 
 source = parse_dev_file("ACS152.dev")
 print(get_metadata("ACS152.dev"))
@@ -359,8 +359,8 @@ documented only on the certificate ("Soc = 3.0753e-04 **(adj)**"), not in
 the `.cal` file:
 
 ```python
-from cruise_tools.dofstk import parse_dofstk, get_cal_metadata, get_soc_pdf_metadata
-from cruise_tools.common import compare_source_to_ci, summarize
+from calibration_checker.dofstk import parse_dofstk, get_cal_metadata, get_soc_pdf_metadata
+from calibration_checker.common import compare_source_to_ci, summarize
 
 source = parse_dofstk("2725.cal", "SBE_43F_O2725_15May26-Soc-adjusted.pdf")
 print(get_cal_metadata("2725.cal"))
@@ -380,8 +380,8 @@ print(summarize(result))
 ### PARAD-K (Biospherical QSP-2200 PAR sensor): cal certificate PDF
 
 ```python
-from cruise_tools.parad import parse_parad_pdf, get_metadata
-from cruise_tools.common import compare_source_to_ci, summarize
+from calibration_checker.parad import parse_parad_pdf, get_metadata
+from calibration_checker.common import compare_source_to_ci, summarize
 
 source = parse_parad_pdf("PARAD-K_QSP2200_SN_20465_Calibration_2026-05-07.pdf")
 print(get_metadata("PARAD-K_QSP2200_SN_20465_Calibration_2026-05-07.pdf"))
@@ -397,13 +397,13 @@ Some PARAD-K certificates are scanned images with no embedded text layer
 (unlike the more typical text-based ones) — `parse_parad_pdf()` detects
 this automatically and falls back to OCR, the same way CDOM's
 characterisation sheets always do. On Windows, if Tesseract isn't on
-PATH: `cruise_tools.parad.pdf_parser.TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"`.
+PATH: `calibration_checker.parad.pdf_parser.TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"`.
 
 ### NUTNR-B (Satlantic/Sea-Bird SUNA V2 nitrate analyzer): `.CAL` file
 
 ```python
-from cruise_tools.nutnr import parse_cal_file, get_metadata
-from cruise_tools.common import compare_source_to_ci, summarize
+from calibration_checker.nutnr import parse_cal_file, get_metadata
+from calibration_checker.common import compare_source_to_ci, summarize
 
 source = parse_cal_file("SNA1063N.CAL")
 print(get_metadata("SNA1063N.CAL"))
@@ -421,23 +421,23 @@ print(summarize(result))
 
 ## Adding a new instrument family
 
-1. Create `cruise_tools/<family>/` with an `__init__.py` and a parser module.
+1. Create `calibration_checker/<family>/` with an `__init__.py` and a parser module.
 2. Write one function per source file: `parse_<something>(filepath) -> pd.DataFrame`
    with columns `serial`, `name`, `value` (and optionally `source_file`), using
    the **same coefficient names as that instrument's CI CSV** (e.g. `CC_a0`).
    If the vendor file's key names don't already match, map them the way
-   `cruise_tools/ctdmo/cal_parser.py` maps `TA0 → CC_a0`, `PA0 → CC_pa0`, etc.
+   `calibration_checker/ctdmo/cal_parser.py` maps `TA0 → CC_a0`, `PA0 → CC_pa0`, etc.
    Most instruments need only one source file; if yours needs more than one
    (like DOFSTK's `.cal` + certificate PDF), write one parser per file plus
    a small combine function that concatenates them (see
-   `cruise_tools/dofstk/combined.py`).
-3. Register it in `INSTRUMENT_PARSERS` at the top of `cruise_tools/cal_tool.py`:
+   `calibration_checker/dofstk/combined.py`).
+3. Register it in `INSTRUMENT_PARSERS` at the top of `calibration_checker/cal_tool.py`:
    a `"sources"` list (one entry per input file, each with a `key`, `label`,
    `parse` function, and `file_types`) and a `"combine"` function that turns
    the loaded per-source DataFrames into one. The Tab 4 "Source file(s)"
    section renders itself from this list automatically — one instrument, one
    button; two instruments, two buttons — no GUI code to write.
-4. `cruise_tools.common.compare_source_to_ci` handles the comparison,
+4. `calibration_checker.common.compare_source_to_ci` handles the comparison,
    Δ%, and status classification (`match` / `mismatch` / `missing_in_ci` /
    `missing_in_source`) for you.
 

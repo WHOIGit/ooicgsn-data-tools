@@ -4,7 +4,7 @@ Generic comparison between:
   * a parsed *source* calibration record — long format, one row per
     coefficient: ``serial``, ``name``, ``value`` (plus optional
     ``source_file``) — produced by any of the per-instrument parsers in
-    ``cruise_tools.<instrument>``; and
+    ``calibration_checker.<instrument>``; and
 
   * an independently generated *CI calibration CSV* — the format used to
     load coefficients into the OOI Calibration Information (asset

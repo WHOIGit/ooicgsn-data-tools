@@ -42,7 +42,7 @@ def parse_dofstk(cal_filepath: str, soc_pdf_filepath: str) -> pd.DataFrame:
     -------
     pd.DataFrame
         Columns: serial, name, value, source_file — ready for
-        ``cruise_tools.common.compare_source_to_ci()``.
+        ``calibration_checker.common.compare_source_to_ci()``.
     """
     cal_df = parse_cal_file(cal_filepath)
     soc_df = parse_soc_pdf(soc_pdf_filepath)

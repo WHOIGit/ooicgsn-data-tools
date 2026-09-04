@@ -51,12 +51,12 @@ TESSERACT_CMD: str | None = None
 def _ocr_pdf(filepath: str, dpi: int = 500) -> str:
     """Rasterise a PDF with pdf2image and return OCR text via pytesseract.
 
-    If Tesseract is not on your PATH, set cdom_pdf_parser.TESSERACT_CMD to
+    If Tesseract is not on your PATH, set pdf_parser.TESSERACT_CMD to
     the full path of the tesseract executable before calling this function,
     e.g.:
 
-        from cruise_tools.cdom import cdom_pdf_parser
-        cdom_pdf_parser.TESSERACT_CMD = r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+        from calibration_checker.cdom import pdf_parser
+        pdf_parser.TESSERACT_CMD = r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
     """
     return ocr_pdf_text(filepath, dpi=dpi, tesseract_cmd=TESSERACT_CMD)
 
@@ -125,7 +125,7 @@ def parse_cdom_pdf(filepath: str, tesseract_cmd: str | None = None) -> dict[str,
 
     This document type is typically a scanned image, so OCR is used
     automatically. Returns a single dict with the same schema as
-    ``cruise_tools.ctd.parse_cal_pdf()``, containing scale_factor and
+    ``calibration_checker.ctd.parse_cal_pdf()``, containing scale_factor and
     vblank (both Analog Range 1 values, matching the XMLCON convention).
 
     Parameters
@@ -135,7 +135,7 @@ def parse_cdom_pdf(filepath: str, tesseract_cmd: str | None = None) -> dict[str,
     tesseract_cmd : str, optional
         Full path to the tesseract executable. Only needed if tesseract is
         not on your system PATH (common on Windows). Can also be set once
-        at module level via ``cdom_pdf_parser.TESSERACT_CMD`` instead of
+        at module level via ``pdf_parser.TESSERACT_CMD`` instead of
         passing it on every call.
         Example: r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 

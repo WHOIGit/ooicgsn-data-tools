@@ -1,6 +1,6 @@
 """
-Cruise Tools — Calibration GUI
-====================================
+Calibration Checker — Calibration GUI
+======================================
 Tabs:
   1. XMLCON Files      — load / inspect individual XMLCON files (CTD frame)
   2. Cast Diff         — compare coefficients across casts (consecutive N-1 vs N)
@@ -11,7 +11,7 @@ Tabs:
                           transcription errors before upload. Extensible to
                           new instrument families via INSTRUMENT_PARSERS.
 
-Run:  python -m cruise_tools.cal_tool
+Run:  python -m calibration_checker.cal_tool
 """
 
 import sys
@@ -22,7 +22,7 @@ from pathlib import Path
 from collections import defaultdict
 
 try:
-    # Normal case: running as part of the installed cruise_tools package.
+    # Normal case: running as part of the installed calibration_checker package.
     from .ctd.xmlcon_parser_enhanced import XMLCONParser
     from .ctd.cal_pdf_parser import (
         parse_cal_pdf,
@@ -30,10 +30,10 @@ try:
     )
     from .flort import parse_flort_pdf
     from .flort import dev_parser as flort_dev_parser
-    from .cdom import cdom_pdf_parser
-    from .cdom.cdom_pdf_parser import parse_cdom_pdf
+    from .cdom import pdf_parser as cdom_pdf_parser
+    from .cdom.pdf_parser import parse_cdom_pdf
     from .ctdmo import cal_parser as ctdmo_cal_parser
-    from .dosta import aanderaa_pdf_parser as dosta_pdf_parser
+    from .dosta import pdf_parser as dosta_pdf_parser
     from .optaa import dev_parser as optaa_dev_parser
     from .dofstk import cal_parser as dofstk_cal_parser
     from .dofstk import soc_pdf_parser as dofstk_soc_pdf_parser
@@ -47,27 +47,27 @@ except ImportError:
     SCRIPT_DIR = Path(__file__).parent
     sys.path.insert(0, str(SCRIPT_DIR.parent))
     try:
-        from cruise_tools.ctd.xmlcon_parser_enhanced import XMLCONParser
-        from cruise_tools.ctd.cal_pdf_parser import (
+        from calibration_checker.ctd.xmlcon_parser_enhanced import XMLCONParser
+        from calibration_checker.ctd.cal_pdf_parser import (
             parse_cal_pdf,
             compare_cal_to_xmlcon,
         )
-        from cruise_tools.flort import parse_flort_pdf
-        from cruise_tools.flort import dev_parser as flort_dev_parser
-        from cruise_tools.cdom import cdom_pdf_parser
-        from cruise_tools.cdom.cdom_pdf_parser import parse_cdom_pdf
-        from cruise_tools.ctdmo import cal_parser as ctdmo_cal_parser
-        from cruise_tools.dosta import aanderaa_pdf_parser as dosta_pdf_parser
-        from cruise_tools.optaa import dev_parser as optaa_dev_parser
-        from cruise_tools.dofstk import cal_parser as dofstk_cal_parser
-        from cruise_tools.dofstk import soc_pdf_parser as dofstk_soc_pdf_parser
-        from cruise_tools.dofstk import parse_dofstk
-        from cruise_tools.parad import pdf_parser as parad_pdf_parser
-        from cruise_tools.nutnr import cal_parser as nutnr_cal_parser
-        from cruise_tools.common import compare_source_to_ci, summarize as ci_summarize
+        from calibration_checker.flort import parse_flort_pdf
+        from calibration_checker.flort import dev_parser as flort_dev_parser
+        from calibration_checker.cdom import pdf_parser as cdom_pdf_parser
+        from calibration_checker.cdom.pdf_parser import parse_cdom_pdf
+        from calibration_checker.ctdmo import cal_parser as ctdmo_cal_parser
+        from calibration_checker.dosta import pdf_parser as dosta_pdf_parser
+        from calibration_checker.optaa import dev_parser as optaa_dev_parser
+        from calibration_checker.dofstk import cal_parser as dofstk_cal_parser
+        from calibration_checker.dofstk import soc_pdf_parser as dofstk_soc_pdf_parser
+        from calibration_checker.dofstk import parse_dofstk
+        from calibration_checker.parad import pdf_parser as parad_pdf_parser
+        from calibration_checker.nutnr import cal_parser as nutnr_cal_parser
+        from calibration_checker.common import compare_source_to_ci, summarize as ci_summarize
     except ImportError as e:
         print(f"Import error: {e}\n"
-              "Run this from the repo root (e.g. `python -m cruise_tools.cal_tool`) "
+              "Run this from the repo root (e.g. `python -m calibration_checker.cal_tool`) "
               "or install the package (`pip install -e .`).")
         sys.exit(1)
 
@@ -1273,7 +1273,7 @@ class CalTool(tk.Tk):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main():
-    """Entry point for the ``ctd-cal-tool`` console script."""
+    """Entry point for the ``cal-tool`` console script."""
     app = CalTool()
     app.mainloop()
 

@@ -1,4 +1,4 @@
-# ── SeaBird CTD Calibration Tool — pip requirements ─────────────────────────
+# ── Calibration Checker — pip requirements ──────────────────────────────────
 #
 # For conda users the environment.yml is preferred because it also installs
 # the Tesseract OCR binary and poppler automatically via conda-forge.
@@ -9,9 +9,11 @@
 #   macOS   : brew install tesseract poppler
 #   Linux   : sudo apt install tesseract-ocr poppler-utils
 #
-# Then point the tool at the executable if it is not on PATH:
-#   import cal_pdf_parser
-#   cal_pdf_parser.TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# Then point the tool at the executable if it is not on PATH (needed by
+# calibration_checker.cdom and calibration_checker.parad, which OCR scanned
+# certificates):
+#   from calibration_checker.cdom import pdf_parser
+#   pdf_parser.TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 # ---------------------------------------------------------------------------
 
 pandas>=2.0

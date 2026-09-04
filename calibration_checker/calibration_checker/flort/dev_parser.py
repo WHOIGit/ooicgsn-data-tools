@@ -8,7 +8,7 @@ built into the same physical puck (not a separate sensor) — one `.dev`
 file and one CI calibration CSV (`CGINS-FLORTD-xxxxx__<date>.csv`) cover
 all three channels. This is a different device from the standalone
 single-channel ECO CDOM fluorometer characterisation sheet handled by
-``cruise_tools.cdom`` (that one is its own separate sensor, tracked under
+``calibration_checker.cdom`` (that one is its own separate sensor, tracked under
 a different asset class, and OCR'd from a scanned PDF instead of parsed
 from a `.dev` file).
 

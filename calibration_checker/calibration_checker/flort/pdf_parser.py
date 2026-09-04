@@ -59,7 +59,7 @@ def parse_flort_pdf(filepath: str) -> list[dict[str, Any]]:
     dicts, one for the fluorometer (CHL) and one for the turbidity meter
     (NTU).
 
-    Each dict uses the same schema as ``cruise_tools.ctd.parse_cal_pdf()``:
+    Each dict uses the same schema as ``calibration_checker.ctd.parse_cal_pdf()``:
         source_file, sensor_type, serial_number, calibration_date,
         scale_factor, dark_counts (analog values), _nominal (empty set)
     """
@@ -107,6 +107,6 @@ def parse_flort_pdf(filepath: str) -> list[dict[str, Any]]:
     return [chl_record, ntu_record]
 
 
-# Backwards-compatible alias (this used to live in cruise_tools.ctd as
+# Backwards-compatible alias (this used to live in calibration_checker.ctd as
 # parse_flntu_pdf before FLORT was split into its own module).
 parse_flntu_pdf = parse_flort_pdf

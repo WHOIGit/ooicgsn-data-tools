@@ -160,9 +160,9 @@ def parse_cal_pdf(filepath: str) -> dict[str, Any]:
     relevant fields.
 
     For FLNTU/FLORT characterisation sheets (fluorometer + turbidity), use
-    ``cruise_tools.flort.parse_flort_pdf()`` instead — it returns a list of
+    ``calibration_checker.flort.parse_flort_pdf()`` instead — it returns a list of
     two dicts, one per sensor. For CDOM characterisation sheets, use
-    ``cruise_tools.cdom.parse_cdom_pdf()``.
+    ``calibration_checker.cdom.parse_cdom_pdf()``.
 
     Keys returned:
         source_file       - basename of the PDF

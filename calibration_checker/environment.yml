@@ -1,4 +1,4 @@
-name: ctd-cal
+name: calibration-checker
 channels:
   - conda-forge
   - defaults
