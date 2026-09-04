@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cruise-tools-ctd"
+version = "0.2.0"
+description = "Multi-instrument calibration parsers (CTD/XMLCON, CTDMO, ...) and a GUI for verifying calibration coefficients against CI calibration CSVs before upload"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "WHOI CGSN" },
+]
+keywords = ["SeaBird", "CTD", "CTDMO", "oceanography", "calibration", "XMLCON", "OOI"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Oceanography",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "pdfplumber>=0.11",
+    "pdf2image>=1.17",
+    "pytesseract>=0.3.13",
+    "Pillow>=10.0",
+]
+
+[project.scripts]
+# Launch the GUI directly from the command line after pip install
+cal-tool = "cruise_tools.cal_tool:main"
+
+[project.urls]
+Repository = "https://github.com/WHOIGit/ooicgsn-data-tools"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cruise_tools*"]
